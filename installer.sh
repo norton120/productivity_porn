@@ -4,19 +4,20 @@ if [[ "$1" == "s3_sync" ]]; then
     echo "setting up s3 sync"
     SETTINGS_PATH=${HOME}/.productivity_porn_settings
     cp -u .productivity_porn_settings.template $SETTINGS_PATH
-    read -p "please configure your ~/.productivty_porn_settings file. Is your file updated? [y/n]" -n 1 -r
+    read -p "please configure your ${SETTINGS_PATH} file. Is your file updated?: [y/n] " -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         export $(cat ${SETTINGS_PATH} | xargs) 1> /dev/null
+        echo ""
     else
         echo "OK aborting s3 sync install."
         exit 0
     fi
     cp -u .personal_secrets.template $PERSONAL_SECRETS_PATH
-    read -p "please configure your ${PERSONAL_SECRETS_PATH} file. Is your file updated? [y/n]" -n 1 -r
+    read -p "please configure your ${PERSONAL_SECRETS_PATH} file. Is your file updated?: [y/n] " -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "great!"
+        printf "\ngreat!"
     else
-        echo "OK aborting s3 sync install."
+        printf "\nOK aborting s3 sync install."
         exit 0
     fi
     echo "installing s3_sync.sh to /usr/local/bin. (this will require sudo)..."
@@ -24,7 +25,7 @@ if [[ "$1" == "s3_sync" ]]; then
     echo "installed."
 
     CRONLINE="*/${S3_SYNC_LAG_MINUTES} * * * * /bin/bash /usr/local/bin/s3_sync.sh"
-    echo "adding ${CRONLINE} to crontab..."
+    printf "attempting to add ${CRONLINE} to crontab..."
     if [[ $(crontab -l | egrep -v "^(#|$)" | grep -q '/bin/bash /usr/local/bin/s3_sync.sh'; echo $?) == 1 ]]; then
         echo "s3 sync not in crontab. adding..."
         set -f
