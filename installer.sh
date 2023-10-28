@@ -24,10 +24,10 @@ if [[ "$1" == "s3_sync" ]]; then
     sudo cp s3_sync/s3_sync.sh /usr/local/bin/s3_sync.sh
     printf "\ninstalled."
 
-    CRONLINE="*/${S3_SYNC_LAG_MINUTES} * * * * /bin/bash /usr/local/bin/s3_sync.sh"
-    printf "attempting to add ${CRONLINE} to crontab..."
+    CRONLINE="*/${S3_SYNC_LAG_MINUTES} * * * * HOME=${HOME} /bin/bash /usr/local/bin/s3_sync.sh"
+    printf "\nattempting to add ${CRONLINE} to crontab...\n"
     if [[ $(crontab -l | egrep -v "^(#|$)" | grep -q '/bin/bash /usr/local/bin/s3_sync.sh'; echo $?) == 1 ]]; then
-        echo "s3 sync not in crontab. adding..."
+        printf "\ns3 sync not in crontab. adding...\n"
         set -f
         printf '%s\n' "$(crontab -l; echo $CRONLINE)" | crontab -
         set +f
@@ -35,7 +35,25 @@ if [[ "$1" == "s3_sync" ]]; then
     else
         echo "s3 sync already in crontab."
     fi
-    echo "s3 sync install completed."
+
+
+    ## LOGSEQ ###
+    read -p "are you using this bucket to sync logseq? [y/n] " -n 1 -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        printf "\nOK. To avoid a race condition with logseq,\n\twe will sync with s3 before opening logseq by adding the sync to logseq's startup script.\n\tThis will require sudo."
+        LOGSEQ_DESKTOP=/var/lib/snapd/desktop/applications/logseq_logseq.desktop
+        if [[ ! -f $LOGSEQ_DESKTOP ]]; then
+            echo "logseq desktop file not found. I only know how to handle snap packages sorry."
+            exit 1
+        fi
+        sudo cp s3_sync/pre_logseq_sync.sh /usr/local/bin/pre_logseq_sync.sh
+        NEW_EXEC='Exec=env BAMF_DESKTOP_FILE_HINT=/var/lib/snapd/desktop/applications/logseq_logseq.desktop  /usr/local/bin/pre_logseq_sync.sh %U'
+        ESCAPED_NEW_EXEC=$(printf '%s\n' "$NEW_EXEC" | sed -e 's/[\/&]/\\&/g')
+
+        sudo sed -i "s/^Exec=.*/$ESCAPED_NEW_EXEC/g" $LOGSEQ_DESKTOP
+        printf "\nupdated.\n"
+    fi
+    echo "s3_sync installed."
 else
     echo "please define a thing to install"
 fi
