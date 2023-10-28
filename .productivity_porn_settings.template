@@ -1,0 +1,6 @@
+USER_HOME_PATH=/home/your-user-name
+PERSONAL_SECRETS_PATH=/home/your-user-name/.personal_secrets
+S3_SYNC_PATH=/home/your-user-name/folder-to-sync
+S3_BUCKET_NAME=some_bucket
+S3_SYNC_LAG_MINUTES=10
+S3_SYNC_CHOWN_USER_GROUP=your-user:your-group
