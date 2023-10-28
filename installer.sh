@@ -56,7 +56,8 @@ if [[ "$1" == "s3_sync" ]]; then
     fi
     echo "s3_sync installed."
 elif [[ "$1" == "status" ]]; then
-    cp status.sh /usr/local/bin/status.sh
+    printf "\nadding status.sh to /usr/local/bin. (this will require sudo)..."
+    sudo cp status.sh /usr/local/bin/status.sh
     printf "\nsource  /usr/local/bin/status.sh" >> ${HOME}/.bashrc
     echo "status installed."
 else
