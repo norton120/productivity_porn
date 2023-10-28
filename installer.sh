@@ -28,7 +28,7 @@ if [[ "$1" == "s3_sync" ]]; then
     if [[ $(crontab -l | egrep -v "^(#|$)" | grep -q '/bin/bash /usr/local/bin/s3_sync.sh'; echo $?) == 1 ]]; then
         echo "s3 sync not in crontab. adding..."
         set -f
-        echo $(crontab -l ; echo "$CRONLINE") | crontab -
+        printf '%s\n' "$(crontab -l; echo $CRONLINE)" | crontab -
         set +f
         echo "s3 sync added to crontab."
     else
