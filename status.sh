@@ -1,11 +1,12 @@
 #!/bin/bash
 # a status print for productivity things
-set -e
-RED=$(tput setaf 1)
-GREEN=$(tput setaf 2)
-NORMAL=$(tput sgr0)
 
 status () {
+
+    set -e
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    NORMAL=$(tput sgr0)
     STATUS_PATH=${HOME}/.status
     while IFS="" read -r p || [ -n "$p" ]
     do
