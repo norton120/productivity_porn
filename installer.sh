@@ -2,15 +2,16 @@
 set -e
 if [[ "$1" == "s3_sync" ]]; then
     echo "setting up s3 sync"
-    read -p "please configure your ~/.productivty_porn_settings file. Is your file updated? [y/n]" -n 1 -r
     SETTINGS_PATH=${HOME}/.productivity_porn_settings
+    cp -u .productivity_porn_settings.template $SETTINGS_PATH
+    read -p "please configure your ~/.productivty_porn_settings file. Is your file updated? [y/n]" -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         export $(cat ${SETTINGS_PATH} | xargs) 1> /dev/null
     else
         echo "OK aborting s3 sync install."
         exit 0
     fi
-    cp .personal_secrets.template $PERSONAL_SECRETS_PATH
+    cp -u .personal_secrets.template $PERSONAL_SECRETS_PATH
     read -p "please configure your ${PERSONAL_SECRETS_PATH} file. Is your file updated? [y/n]" -n 1 -r
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         echo "great!"
