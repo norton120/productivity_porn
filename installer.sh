@@ -20,9 +20,9 @@ if [[ "$1" == "s3_sync" ]]; then
         printf "\nOK aborting s3 sync install."
         exit 0
     fi
-    echo "installing s3_sync.sh to /usr/local/bin. (this will require sudo)..."
+    printf "\ninstalling s3_sync.sh to /usr/local/bin. (this will require sudo)..."
     sudo cp s3_sync/s3_sync.sh /usr/local/bin/s3_sync.sh
-    echo "installed."
+    printf "\ninstalled."
 
     CRONLINE="*/${S3_SYNC_LAG_MINUTES} * * * * /bin/bash /usr/local/bin/s3_sync.sh"
     printf "attempting to add ${CRONLINE} to crontab..."
