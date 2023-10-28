@@ -2,6 +2,7 @@
 set -e
 if [[ "$1" == "s3_sync" ]]; then
     echo "setting up s3 sync"
+    cp -u .status.template ${HOME}/.status
     SETTINGS_PATH=${HOME}/.productivity_porn_settings
     cp -u .productivity_porn_settings.template $SETTINGS_PATH
     read -p "please configure your ${SETTINGS_PATH} file. Is your file updated?: [y/n] " -n 1 -r
@@ -54,6 +55,10 @@ if [[ "$1" == "s3_sync" ]]; then
         printf "\nupdated.\n"
     fi
     echo "s3_sync installed."
+elif [[ "$1" == "status" ]]; then
+    cp status.sh /usr/local/bin/status.sh
+    printf "\nsource  /usr/local/bin/status.sh" >> ${HOME}/.bashrc
+    echo "status installed."
 else
     echo "please define a thing to install"
 fi

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+STATUS_PATH=${HOME}/.status
 SETTINGS_PATH=${HOME}/.productivity_porn_settings
 export $(cat ${SETTINGS_PATH} | xargs) 1> /dev/null
 export $(cat ${PERSONAL_SECRETS_PATH} | xargs) 1> /dev/null
@@ -15,6 +16,7 @@ else
 	-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync . s3://${S3_BUCKET_NAME}
 	echo "new files written to AWS."
+	sed -i "s/^LAST_S3_UP_SYNC=.*/LAST_S3_UP_SYNC=$(date +%Y-%m-%dT%H:%M:00)/g" ${STATUS_PATH}
 fi
 echo "pulling files from AWS..."
 	docker run --rm \
@@ -22,6 +24,7 @@ echo "pulling files from AWS..."
 	-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
 	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync s3://${S3_BUCKET_NAME} .
 	echo "new files pulled from AWS."
+	sed -i "s/^LAST_S3_DOWN_SYNC=.*/LAST_S3_DOWN_SYNC=$(date +%Y-%m-%dT%H:%M:00)/g" ${STATUS_PATH}
 
 if [ "$EUID" -ne 0 ]; then
 	pkexec chown -R  $S3_SYNC_CHOWN_USER_GROUP $S3_SYNC_PATH
