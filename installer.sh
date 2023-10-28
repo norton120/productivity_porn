@@ -6,6 +6,17 @@ if [[ "$1" == "s3_sync" ]]; then
     SETTINGS_PATH=${HOME}/.productivity_porn_settings
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         export $(cat ${SETTINGS_PATH} | xargs) 1> /dev/null
+    else
+        echo "OK aborting s3 sync install."
+        exit 0
+    fi
+    cp .personal_secrets.template $PERSONAL_SECRETS_PATH
+    read -p "please configure your ${PERSONAL_SECRETS_PATH} file. Is your file updated? [y/n]" -n 1 -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "great!"
+    else
+        echo "OK aborting s3 sync install."
+        exit 0
     fi
     echo "installing s3_sync.sh to /usr/local/bin. (this will require sudo)..."
     sudo cp s3_sync/s3_sync.sh /usr/local/bin/s3_sync.sh
