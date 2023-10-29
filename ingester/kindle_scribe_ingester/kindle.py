@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 from email_ingester.email import GmailIngester
 
-logger = getLogger(__name__)
+logger = getLogger("app").getChild(__name__)
 
 class FileExists(Exception):
     pass
@@ -85,7 +85,7 @@ class Kindle:
             return
         asset_file.write_bytes(self.read_binary_from_link(link))
         logger.debug("Wrote pdf to logseq assets")
-        self._set_permissions_on_file(asset_file)
+        logseq.set_permissions_on_file(asset_file)
         logseq.write_journal_block(f"- ![{filename}](../assets/{filename})")
 
     def write_text_to_logseq_page(self, filename:str, link:str) -> None:
@@ -102,7 +102,7 @@ class Kindle:
         bytes_ = logseq_file.write_text(clean_text)
         logger.debug("wrote %s bytes to file %s", bytes_, logseq_file.absolute())
 
-        self._set_permissions_on_file(logseq_file)
+        Logseq.set_permissions_on_file(logseq_file)
 
     def _get_file_if_not_exists(self, filename:str)-> bool:
         """Gets a non-existant file or raises FileExists"""
@@ -120,14 +120,6 @@ class Kindle:
             logger.info(message)
             raise FileExists(message)
         return logseq_file
-
-    def _set_permissions_on_file(self, filepath:Path) -> None:
-        """since runs as root, need to fix user and groups"""
-        NON_ROOT_UID = 1000
-        NON_ROOT_GID = 1000
-        logger.debug("Setting permissions on new file %s...", logseq_file.absolute())
-        os.chown(filepath, NON_ROOT_UID, NON_ROOT_GID)
-        logger.debug("Permissions set on %s", filepath.absolute())
 
     @classmethod
     def _is_a_pdf(cls, filename:str) -> bool:

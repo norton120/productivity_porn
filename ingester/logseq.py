@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import date
 from logging import getLogger
@@ -29,3 +30,12 @@ class Logseq:
         todays_journal.write_text(  current_journal
                                   + "\n"
                                   + block)
+
+    @classmethod
+    def set_permissions_on_file(cls, filepath:Path) -> None:
+        """since runs as root, need to fix user and groups"""
+        NON_ROOT_UID = 1000
+        NON_ROOT_GID = 1000
+        logger.debug("Setting permissions on new file %s...", filepath.name)
+        os.chown(filepath, NON_ROOT_UID, NON_ROOT_GID)
+        logger.debug("Permissions set on %s", filepath.absolute())

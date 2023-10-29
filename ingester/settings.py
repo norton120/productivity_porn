@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     #slack_api_token: str
     #slack_user_id: str
     #calendar_email:str
-    #atlassian_token: str
-    #atlassian_email: str
-    #atlassian_host: str
+    atlassian_token: str
+    atlassian_email: str
+    atlassian_host: str
     sync_dir: str
