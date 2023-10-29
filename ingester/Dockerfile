@@ -3,4 +3,4 @@ COPY . /app
 WORKDIR /app
 RUN pip install -r requirements.txt
 ENV PYTHONPATH=/app
-CMD ["python3"]
+entrypoint ["python", "main.py"]

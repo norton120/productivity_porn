@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - .:/app
+      - ~/knox-dev-backend:/root/knox-dev-backend
     env_file:
       - .env
     working_dir: /app
