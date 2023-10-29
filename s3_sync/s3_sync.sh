@@ -14,7 +14,7 @@ else
 	docker run --rm \
 	-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 	-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync . s3://${S3_BUCKET_NAME}
+	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync . s3://${S3_BUCKET_NAME} --delete
 	echo "new files written to AWS."
 	sed -i "s/^LAST_S3_UP_SYNC=.*/LAST_S3_UP_SYNC=$(date +%Y-%m-%dT%H:%M:00)/g" ${STATUS_PATH}
 fi
@@ -22,7 +22,7 @@ echo "pulling files from AWS..."
 	docker run --rm \
 	-e AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
 	-e AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
-	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync s3://${S3_BUCKET_NAME} .
+	-v ${S3_SYNC_PATH}:/aws amazon/aws-cli s3 sync s3://${S3_BUCKET_NAME} . --delete
 	echo "new files pulled from AWS."
 	sed -i "s/^LAST_S3_DOWN_SYNC=.*/LAST_S3_DOWN_SYNC=$(date +%Y-%m-%dT%H:%M:00)/g" ${STATUS_PATH}
 

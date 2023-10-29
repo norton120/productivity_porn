@@ -32,12 +32,12 @@ class Logseq:
         """sync mechanics"""
         logger.info("%sing files to s3...",direction)
         s3_path = f"s3://{self.s3_bucket}"
-        prefix = "logseq"
+        sync_path = self.root_path.parent # needs to be root folder or all hell breaks loose
         directions = {
-            "push":[self.root_path, s3_path,],
-            "pull":[s3_path, self.root_path,]
+            "push":[sync_path, s3_path,],
+            "pull":[s3_path, sync_path,]
         }
-        args = ["aws", "s3", "sync" ] + directions[direction] + ["--include", prefix]
+        args = ["aws", "s3", "sync" ] + directions[direction]
         run (args, check=True)
         logger.info("%s complete", direction)
 
