@@ -78,10 +78,15 @@ class Kindle:
             logger.info(f"{filename} already exists in logseq assets, skipping")
             return
         asset_file.write_bytes(self.read_binary_from_link(link))
+        logger.debug("Wrote pdf to logseq assets")
         NON_ROOT_UID = 1000
         NON_ROOT_GID = 1000
+        logger.debug(f"Changing ownership of {asset_file} to {NON_ROOT_UID}:{NON_ROOT_GID}")
         os.chown(asset_file, NON_ROOT_UID, NON_ROOT_GID)
+        logger.debug(f"Writing journal block for {filename}")
         logseq.write_journal_block(f"- ![{filename}](../assets/{filename})")
+        logger.debug("Wrote journal block")
+
 
     def read_binary_from_link(self, link:str) -> bytes:
         """read binary data from link"""
