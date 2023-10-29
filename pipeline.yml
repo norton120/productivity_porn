@@ -1,0 +1,24 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.8
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the Docker image...
+      - docker build -t <your-image-name>:<your-image-tag> .
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region <your-region> | docker login --username AWS --password-stdin <your-ecr-repository-url>
+      - echo Pushing the Docker image to ECR...
+      - docker push <your-ecr-repository-url>/<your-image-name>:<your-image-tag>
+  deploy:
+    commands:
+      - echo Deploying the Docker image to ECS...
+      - aws ecs update-service --cluster <your-ecs-cluster-name> --service <your-ecs-service-name> --force-new-deployment
+
+artifacts:
+  files:
+    - appspec.yml
+    - imagedefinitions.json
