@@ -20,3 +20,4 @@ class Settings(BaseSettings):
     atlassian_email: str
     atlassian_host: str
     sync_dir: str
+    s3_bucket: str

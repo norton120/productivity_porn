@@ -1,4 +1,6 @@
+from typing import Literal
 import os
+from subprocess import run
 from pathlib import Path
 from datetime import date
 from logging import getLogger
@@ -11,11 +13,33 @@ class Logseq:
 
     def __init__(self):
         settings = Settings()
-        self._root_path = Path(settings.sync_dir) / "logseq"
-        assert self._root_path.exists()
-        self.journals = self._root_path / "journals"
-        self.assets = self._root_path / "assets"
-        self.pages = self._root_path / "pages"
+        self.s3_bucket = settings.s3_bucket
+        self.root_path = Path(settings.sync_dir) / "logseq"
+        assert self.root_path.exists()
+        self.journals = self.root_path / "journals"
+        self.assets = self.root_path / "assets"
+        self.pages = self.root_path / "pages"
+
+    def pull_from_s3(self) -> None:
+        """pull logseq files from s3 store if they are newer than local"""
+        self._sync("pull")
+
+    def push_to_s3(self) -> None:
+        """push logseq files to s3 store if they are newer than remote"""
+        self._sync("push")
+
+    def _sync(self, direction:Literal["push","pull"]) -> None:
+        """sync mechanics"""
+        logger.info("%sing files to s3...",direction)
+        s3_path = f"s3://{self.s3_bucket}"
+        prefix = "logseq"
+        directions = {
+            "push":[self.root_path, s3_path,],
+            "pull":[s3_path, self.root_path,]
+        }
+        args = ["aws", "s3", "sync" ] + directions[direction] + ["--include", prefix]
+        run (args, check=True)
+        logger.info("%s complete", direction)
 
     def write_journal_block(self, block:str) -> None:
         """write block to today's journal"""
@@ -39,3 +63,4 @@ class Logseq:
         logger.debug("Setting permissions on new file %s...", filepath.name)
         os.chown(filepath, NON_ROOT_UID, NON_ROOT_GID)
         logger.debug("Permissions set on %s", filepath.absolute())
+
