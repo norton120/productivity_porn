@@ -17,6 +17,9 @@ from email_ingester.email import GmailIngester
 
 logger = getLogger(__name__)
 
+class FileExists(Exception):
+    pass
+
 class Kindle:
     """consume Kindle scribe notebooks and pdfs in logseq"""
     REQUEST_PARAMS = {"allow_redirects":True,
@@ -74,51 +77,66 @@ class Kindle:
 
     def write_pdf_to_logseq_journal(self, filename:str, link:str) -> None:
         """write pdf to logseq journal"""
+        # if file exists, skip it
         logseq = Logseq()
-        asset_file = logseq.assets / filename
-        if asset_file.exists():
-            logger.info(f"{filename} already exists in logseq assets, skipping")
+        try:
+            asset_file = self._get_file_if_not_exists(filename)
+        except FileExists:
             return
         asset_file.write_bytes(self.read_binary_from_link(link))
         logger.debug("Wrote pdf to logseq assets")
-        NON_ROOT_UID = 1000
-        NON_ROOT_GID = 1000
-        logger.debug(f"Changing ownership of {asset_file} to {NON_ROOT_UID}:{NON_ROOT_GID}")
-        os.chown(asset_file, NON_ROOT_UID, NON_ROOT_GID)
-        logger.debug(f"Writing journal block for {filename}")
+        self._set_permissions_on_file(asset_file)
         logseq.write_journal_block(f"- ![{filename}](../assets/{filename})")
-        logger.debug("Wrote journal block")
 
     def write_text_to_logseq_page(self, filename:str, link:str) -> None:
-        logseq = Logseq()
+        try:
+            logseq_file = self._get_file_if_not_exists(filename)
+        except FileExists:
+            return
         response = requests.get(link, **self.REQUEST_PARAMS)
         if not response.ok:
             logger.error("Failed to download file %s, Amazon responded with %s", filename, response.status_code)
             return
         raw_text = response.text
         clean_text = self._clean_text(raw_text)
-        logger.debug(f"raw text: {raw_text}")
-
-        filename_stem = Path(filename).stem
-        dateless_name = filename_stem[:
-            (filename_stem.index(str(date.today().year)) -1)]
-        logseq_stem = f"Kindle%2F{dateless_name}.md"
-        logger.info("Writing %s to logseq", logseq_stem)
-
-        logseq_file = logseq.pages / logseq_stem
-        if logseq_file.exists():
-            logger.info("file %s exists, skipping", logseq_file.absolute())
         bytes_ = logseq_file.write_text(clean_text)
         logger.debug("wrote %s bytes to file %s", bytes_, logseq_file.absolute())
 
+        self._set_permissions_on_file(logseq_file)
+
+    def _get_file_if_not_exists(self, filename:str)-> bool:
+        """Gets a non-existant file or raises FileExists"""
+        logseq = Logseq()
+        if self._is_a_pdf(filename):
+            logseq_file = logseq.assets / filename
+        if self._is_a_txt_file(filename):
+            filename_stem = Path(filename).stem
+            dateless_name = filename_stem[:
+                (filename_stem.index(str(date.today().year)) -1)]
+            logseq_stem = f"Kindle%2F{dateless_name}.md"
+            logseq_file = logseq.pages / logseq_stem
+        if logseq_file.exists():
+            message = f"email content `{logseq_file.stem.replace('Kindle%2F','')}` exists, skipping"
+            logger.info(message)
+            raise FileExists(message)
+        return logseq_file
+
+    def _set_permissions_on_file(self, filepath:Path) -> None:
+        """since runs as root, need to fix user and groups"""
         NON_ROOT_UID = 1000
         NON_ROOT_GID = 1000
         logger.debug("Setting permissions on new file %s...", logseq_file.absolute())
-        os.chown(logseq_file, NON_ROOT_UID, NON_ROOT_GID)
-        logger.debug("Permissions set on %s", logseq_file.absolute())
+        os.chown(filepath, NON_ROOT_UID, NON_ROOT_GID)
+        logger.debug("Permissions set on %s", filepath.absolute())
 
-    def write_text_to_logseq_journal(self, filename:str, link:str) -> None:
-        pass
+    @classmethod
+    def _is_a_pdf(cls, filename:str) -> bool:
+        return filename.endswith(".pdf")
+
+    @classmethod
+    def _is_a_txt_file(cls, filename:str) -> bool:
+        return filename.endswith(".txt")
+
     def read_binary_from_link(self, link:str) -> bytes:
         """read binary data from link"""
         response = requests.get(link, **self.REQUEST_PARAMS)
@@ -126,30 +144,6 @@ class Kindle:
             logger.error("Failed to download file %s, Amazon responded with %s", filename, response.status_code)
             return
         return response.content
-
-    #def write_notebook_to_logseq(self,
-                       #notebook:str|Path,
-                       #logseq_path:Optional[str|Path]=Path("/logseq/pages"),
-                       #purge_txt:bool|None=True) -> None:
-        #"""prep kindle notebook file and write to logseq"""
-        #notebook = Path(notebook)
-        #logseq_path = Path(logseq_path)
-        #assert (notebook.exists() and logseq_path.exists())
-        #raw_text = notebook.read_text()
-        #clean_text = self._clean_text(raw_text)
-
-        #dateless_name = notebook.stem[:
-            #(notebook.stem.index(str(date.today().year)) -1)]
-        #logger.info(f"Writing {dateless_name}.md to Logseq"    )
-        #logseq_file = logseq_path / f"Kindle%2F{dateless_name}.md"
-        #logseq_file.write_text(clean_text)
-        #NON_ROOT_UID = 1000
-        #NON_ROOT_GID = 1000
-        #os.chown(logseq_file, NON_ROOT_UID, NON_ROOT_GID)
-        #if not purge_txt:
-            #return
-        #notebook.unlink()
-
 
     @classmethod
     def _clean_text(cls, text:str) -> str:
