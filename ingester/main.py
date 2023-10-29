@@ -20,6 +20,7 @@ def extract_load_kindle_emails(filetype:str):
     click.echo(message)
     k = Kindle()
     download_links = k.extract_email_links(filetype)
+    click.echo(f"found {len(download_links)} links")
     for link in download_links:
         k.route_kindle_file_within_logseq(link)
 

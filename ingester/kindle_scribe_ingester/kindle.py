@@ -19,6 +19,9 @@ logger = getLogger(__name__)
 
 class Kindle:
     """consume Kindle scribe notebooks and pdfs in logseq"""
+    REQUEST_PARAMS = {"allow_redirects":True,
+                      "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_2) AppleWebKit/601.3.9 (KHTML, like Gecko) Version/9.0.2 Safari/601.3.9"}
+    }
 
     def extract_email_links(self, filetype:str|None=None) -> list[str]:
         emails = self.get_kindle_emails_for_the_day()
@@ -61,14 +64,13 @@ class Kindle:
         pdfs are written to logseq as attachments to today's journal.
         """
         filename = self._get_filename_from_kindle_download_link(link)
-        #title = self._get_filename_from_kindle_download_link(link)
-        #if link_type == ".txt":
-            #body = self.read_text_from_link(link)
-            #self.write_notebook_to_logseq(title, link)
-            #return
+        if filename.endswith(".txt"):
+            self.write_text_to_logseq_page(filename, link)
+            return
         if filename.endswith(".pdf"):
             self.write_pdf_to_logseq_journal(filename, link)
             return
+        raise ValueError(f"Unknown filetype for {filename}")
 
     def write_pdf_to_logseq_journal(self, filename:str, link:str) -> None:
         """write pdf to logseq journal"""
@@ -87,47 +89,66 @@ class Kindle:
         logseq.write_journal_block(f"- ![{filename}](../assets/{filename})")
         logger.debug("Wrote journal block")
 
-
-    def read_binary_from_link(self, link:str) -> bytes:
-        """read binary data from link"""
-        return requests.get(link, allow_redirects=True).content
-
-    def write_all_notebooks_to_logseq(self) -> int:
-        """for each notebook in kindle notebook dir, write to logseq
-        Returns:
-            int: number of notebooks written
-        """
-        kindle_path = Path("/kindle")
-        notebooks = list(kindle_path.glob("*.txt"))
-        notebooks.sort(key=lambda x: x.stem)
-        if not notebooks:
-            return 0
-        for index, notebook in enumerate(notebooks):
-            self.write_notebook_to_logseq(notebook)
-        return index + 1
-
-    def write_notebook_to_logseq(self,
-                       notebook:str|Path,
-                       logseq_path:Optional[str|Path]=Path("/logseq/pages"),
-                       purge_txt:bool|None=True) -> None:
-        """prep kindle notebook file and write to logseq"""
-        notebook = Path(notebook)
-        logseq_path = Path(logseq_path)
-        assert (notebook.exists() and logseq_path.exists())
-        raw_text = notebook.read_text()
+    def write_text_to_logseq_page(self, filename:str, link:str) -> None:
+        logseq = Logseq()
+        response = requests.get(link, **self.REQUEST_PARAMS)
+        if not response.ok:
+            logger.error("Failed to download file %s, Amazon responded with %s", filename, response.status_code)
+            return
+        raw_text = response.text
         clean_text = self._clean_text(raw_text)
+        logger.debug(f"raw text: {raw_text}")
 
-        dateless_name = notebook.stem[:
-            (notebook.stem.index(str(date.today().year)) -1)]
-        logger.info(f"Writing {dateless_name}.md to Logseq"    )
-        logseq_file = logseq_path / f"Kindle%2F{dateless_name}.md"
-        logseq_file.write_text(clean_text)
+        filename_stem = Path(filename).stem
+        dateless_name = filename_stem[:
+            (filename_stem.index(str(date.today().year)) -1)]
+        logseq_stem = f"Kindle%2F{dateless_name}.md"
+        logger.info("Writing %s to logseq", logseq_stem)
+
+        logseq_file = logseq.pages / logseq_stem
+        if logseq_file.exists():
+            logger.info("file %s exists, skipping", logseq_file.absolute())
+        bytes_ = logseq_file.write_text(clean_text)
+        logger.debug("wrote %s bytes to file %s", bytes_, logseq_file.absolute())
+
         NON_ROOT_UID = 1000
         NON_ROOT_GID = 1000
+        logger.debug("Setting permissions on new file %s...", logseq_file.absolute())
         os.chown(logseq_file, NON_ROOT_UID, NON_ROOT_GID)
-        if not purge_txt:
+        logger.debug("Permissions set on %s", logseq_file.absolute())
+
+    def write_text_to_logseq_journal(self, filename:str, link:str) -> None:
+        pass
+    def read_binary_from_link(self, link:str) -> bytes:
+        """read binary data from link"""
+        response = requests.get(link, **self.REQUEST_PARAMS)
+        if not response.ok:
+            logger.error("Failed to download file %s, Amazon responded with %s", filename, response.status_code)
             return
-        notebook.unlink()
+        return response.content
+
+    #def write_notebook_to_logseq(self,
+                       #notebook:str|Path,
+                       #logseq_path:Optional[str|Path]=Path("/logseq/pages"),
+                       #purge_txt:bool|None=True) -> None:
+        #"""prep kindle notebook file and write to logseq"""
+        #notebook = Path(notebook)
+        #logseq_path = Path(logseq_path)
+        #assert (notebook.exists() and logseq_path.exists())
+        #raw_text = notebook.read_text()
+        #clean_text = self._clean_text(raw_text)
+
+        #dateless_name = notebook.stem[:
+            #(notebook.stem.index(str(date.today().year)) -1)]
+        #logger.info(f"Writing {dateless_name}.md to Logseq"    )
+        #logseq_file = logseq_path / f"Kindle%2F{dateless_name}.md"
+        #logseq_file.write_text(clean_text)
+        #NON_ROOT_UID = 1000
+        #NON_ROOT_GID = 1000
+        #os.chown(logseq_file, NON_ROOT_UID, NON_ROOT_GID)
+        #if not purge_txt:
+            #return
+        #notebook.unlink()
 
 
     @classmethod
