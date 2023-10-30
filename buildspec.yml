@@ -12,7 +12,8 @@ phases:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
       - echo Installing Docker Buildx...
-      - docker buildx create --use --name multi-arch-builder
+      - curl --silent -L "https://github.com/docker/buildx/releases/download/v0.11.2/buildx-v0.11.2.linux-amd64" > ~/.docker/cli-plugins/docker-buildx
+      - docker buildx create --use
       - docker run --privileged --rm tonistiigi/binfmt --install linux/amd64
   build:
     commands:
