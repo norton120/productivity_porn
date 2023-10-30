@@ -12,9 +12,8 @@ phases:
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
       - echo Installing Docker Buildx...
-      - docker run --privileged --rm tonistiigi/binfmt --install all
-      - docker buildx create --use --name mybuilder
-      - docker buildx inspect --bootstrap
+      - docker buildx create --use --name multi-arch-builder
+      - docker run --privileged --rm tonistiigi/binfmt --install linux/amd64
   build:
     commands:
       - echo Building the Docker image...
