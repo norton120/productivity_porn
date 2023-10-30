@@ -6,7 +6,7 @@ phases:
       docker: 19
   pre_build:
     commands:
-      - REPOSITORY_URI=arn:aws:ecr:us-west-2:093699967222:repository/productivity-porn
+      - REPOSITORY_URI=093699967222.dkr.ecr.us-west-2.amazonaws.com/productivity-porn
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
       - mkdir -vp ~/.docker/cli-plugins/
