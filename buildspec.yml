@@ -7,9 +7,8 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws --version
-      - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-      - REPOSITORY_URI=<your-ecr-repository-uri>
+      - $(aws ecr get-login --region us-east-2 --no-include-email)
+      - REPOSITORY_URI=arn:aws:ecr:us-west-2:093699967222:repository/productivity-porn
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
