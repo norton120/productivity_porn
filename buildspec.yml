@@ -38,4 +38,4 @@ phases:
       - printf '[{"name":"ingester","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
   files:
-    - imagedefinitions.json
+    - ingester/imagedefinitions.json
