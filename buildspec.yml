@@ -11,11 +11,15 @@ phases:
       - REPOSITORY_URI=arn:aws:ecr:us-west-2:093699967222:repository/productivity-porn
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo Installing Docker Buildx...
+      - docker run --privileged --rm tonistiigi/binfmt --install all
+      - docker buildx create --use --name mybuilder
+      - docker buildx inspect --bootstrap
   build:
     commands:
       - echo Build started on `date`
       - echo Building the Docker image...
-      - docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+      - docker buildx build --platform linux/amd64 -t $REPOSITORY_URI:$IMAGE_TAG .
       - docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
   post_build:
     commands:
