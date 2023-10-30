@@ -19,7 +19,7 @@ phases:
       - docker run --privileged --rm tonistiigi/binfmt --install amd64
       - echo "Buildx installed with amd64 support."
       - echo "Logging into Amazon ECR..."
-      - aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 322534677985.dkr.ecr.us-east-2.amazonaws.com
+      - aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 322534677985.dkr.ecr.us-east-2.amazonaws.com
       - echo "Login successful."
   build:
     commands:
